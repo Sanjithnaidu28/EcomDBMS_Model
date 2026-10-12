@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge %}
+{% block title %}Cart & checkout{% endblock %}
+{% block heading %}Cart & checkout{% endblock %}
+{% block content %}
+<form class="filters" method="get">
+  <label class="inline-label">Customer
+  <select id="customer_id" name="customer_id" onchange="this.form.submit()">
+    {% for c in customers %}<option value="{{ c.customer_id }}" {{ 'selected' if c.customer_id == cid }}>{{ c.name }}</option>{% endfor %}
+  </select></label>
+  <noscript><button class="btn">Open cart</button></noscript>
+</form>
+<div class="grid-2 wide-left">
+  <section class="card">
+    <h2>Cart</h2>
+    <table class="tbl"><thead><tr><th>Product</th><th class="r">Price</th><th>Quantity</th><th class="r">In stock</th><th class="r">Line total</th></tr></thead><tbody>
+    {% for i in items %}
+      <tr><td>{{ i.product_name }} <span class="code">{{ i.product_code }}</span></td><td class="r">{{ i.unit_price|inr }}</td>
+        <td><form class="inline" method="post" action="{{ url_for('cart_update') }}"><input type="hidden" name="customer_id" value="{{ cid }}"><input type="hidden" name="cart_item_id" value="{{ i.cart_item_id }}">
+          <input class="w-sm" id="q-{{ i.cart_item_id }}" name="quantity" type="number" min="0" value="{{ i.quantity }}" aria-label="Quantity"><button class="btn sm ghost">Update</button></form></td>
+        <td class="r">{{ i.quantity_available }}{% if i.quantity > i.quantity_available %} {{ badge('Out of stock') }}{% endif %}</td>
+        <td class="r">{{ i.line_total|inr }}</td></tr>
+    {% else %}<tr><td colspan="5" class="empty">The cart is empty. Add a product below.</td></tr>{% endfor %}
+    </tbody>
+    {% if items %}<tfoot><tr><td colspan="4" class="r"><strong>Total</strong></td><td class="r"><strong>{{ total|inr }}</strong></td></tr></tfoot>{% endif %}
+    </table>
+    <p class="muted small">Set a quantity to 0 to remove the item.</p>
+    <form class="add-row" method="post" action="{{ url_for('cart_add') }}">
+      <input type="hidden" name="customer_id" value="{{ cid }}">
+      <select id="add-product" name="product_id" required aria-label="Product"><option value="">Add a product…</option>
+        {% for p in products %}<option value="{{ p.product_id }}">{{ p.product_name }} · {{ p.unit_price|inr }} · {{ p.quantity_available }} in stock</option>{% endfor %}</select>
+      <input class="w-sm" id="add-qty" name="quantity" type="number" min="1" value="1" required aria-label="Quantity">
+      <button class="btn">Add to cart</button>
+    </form>
+  </section>
+  <form class="card form" method="post" action="{{ url_for('checkout') }}">
+    <h2>Checkout</h2>
+    <input type="hidden" name="customer_id" value="{{ cid }}">
+    <div class="fields one">
+      <label>Deliver to<select id="address_id" name="address_id" required>{% for a in addresses %}<option value="{{ a.address_id }}">{{ a.address_line }}, {{ a.city }} {{ a.pincode }}</option>{% endfor %}</select></label>
+      <label>Payment method<select id="payment_method" name="payment_method">{% for m in methods %}<option>{{ m }}</option>{% endfor %}</select></label>
+    </div>
+    <p class="total-line">Order total <strong>{{ total|inr }}</strong></p>
+    <p class="muted small">Checkout runs the stored procedure <code>sp_place_order</code> as one transaction: it checks stock, creates the order and items, records the payment and empties the cart. If anything fails, nothing is saved.</p>
+    <div class="form-actions"><button class="btn primary">Place order</button></div>
+  </form>
+</div>
+{% endblock %}

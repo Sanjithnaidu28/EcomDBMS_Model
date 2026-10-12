@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Today at ShopDesk{% endblock %}
+{% block sub %}<p class="sub">{{ today.strftime('%A, %-d %B %Y') }}. {{ stats.orders }} orders on record.</p>{% endblock %}
+{% block content %}
+<section class="pipeline" aria-label="Order and return lifecycle">
+  <div class="lane">
+    <h2>Orders</h2>
+    <ol class="track">
+      {% for st in ['Placed', 'Confirmed', 'Shipped', 'Delivered'] %}
+      <li class="stage {{ 'done' if st == 'Delivered' }}"><a href="{{ url_for('orders', status=st) }}"><strong>{{ order_counts.get(st, 0) }}</strong><span>{{ st }}</span></a></li>
+      {% endfor %}
+    </ol>
+    <a class="aside-stat bad" href="{{ url_for('orders', status='Cancelled') }}"><strong>{{ order_counts.get('Cancelled', 0) }}</strong><span>Cancelled</span></a>
+  </div>
+  <div class="lane after">
+    <h2>Returns and refunds</h2>
+    <ol class="track">
+      {% for st in ['Requested', 'Approved', 'Received'] %}
+      <li class="stage {{ 'hot' if st == 'Requested' and return_counts.get(st) }}"><a href="{{ url_for('returns', status=st) }}"><strong>{{ return_counts.get(st, 0) }}</strong><span>{{ st }}</span></a></li>
+      {% endfor %}
+      <li class="stage {{ 'hot' if stats.refunds_pending }}"><a href="{{ url_for('refunds') }}"><strong>{{ stats.refunds_pending }}</strong><span>Refunds due</span></a></li>
+    </ol>
+    <a class="aside-stat" href="{{ url_for('returns', status='Rejected') }}"><strong>{{ return_counts.get('Rejected', 0) }}</strong><span>Rejected</span></a>
+  </div>
+</section>
+
+<div class="split">
+  <section class="panel revenue">
+    <div class="panel-head"><h2>Net revenue</h2><a href="{{ url_for('reports', r='revenue') }}">Revenue report</a></div>
+    <p class="big">{{ stats.net_revenue|inr }}</p>
+    <p class="sub">Successful payments minus {{ stats.refunded|inr }} in processed refunds.</p>
+    <div class="bars">
+      {% for m in months %}
+      <div class="bar"><span class="val">{{ m.net_revenue|inr }}</span><div class="col" style="height: {{ m.pct }}%"><div class="refund" style="height: {{ (100 * m.refunds / m.gross_revenue)|round(1) if m.gross_revenue else 0 }}%"></div></div></div>
+      {% endfor %}
+    </div>
+    <div class="bar-labels">{% for m in months %}<span>{{ m.label }}</span>{% endfor %}</div>
+    <p class="legend"><i class="k gross"></i>Gross sales <i class="k ref"></i>Refunded</p>
+  </section>
+  <section class="panel attention">
+    <div class="panel-head"><h2>Needs attention</h2></div>
+    <ul class="todo">
+      {% for p in low %}<li><span class="tag warn">Restock</span><div><strong>{{ p.product_name }}</strong><small>{{ p.quantity_available }} left, reorder at {{ p.reorder_level }}</small></div><a class="btn sm ghost" href="{{ url_for('products', q=p.product_code) }}">Open</a></li>{% endfor %}
+      {% for r in returns %}<li><span class="tag info">Return</span><div><strong>{{ r.product_name }}</strong><small>{{ r.customer_name }}, {{ r.order_number }}, asked {{ r.request_date }}</small></div><a class="btn sm ghost" href="{{ url_for('returns', status='Requested') }}">Review</a></li>{% endfor %}
+      {% if stats.refunds_pending %}<li><span class="tag ok">Refund</span><div><strong>{{ stats.refunds_pending }} refund{{ 's' if stats.refunds_pending != 1 }} to process</strong><small>Initiated and waiting to be paid out</small></div><a class="btn sm ghost" href="{{ url_for('refunds') }}">Open</a></li>{% endif %}
+      {% if not low and not returns and not stats.refunds_pending %}<li class="empty">Nothing needs attention right now.</li>{% endif %}
+    </ul>
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><h2>Recent orders</h2><a href="{{ url_for('orders') }}">All orders</a></div>
+  <div class="scroll"><table class="tbl">
+    <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th class="r">Items</th><th class="r">Total</th><th>Payment</th><th>Status</th></tr></thead>
+    <tbody>{% for o in recent %}<tr><td><a class="ord" href="{{ url_for('order_detail', oid=o.order_id) }}">{{ o.order_number }}</a></td><td>{{ o.customer_name }}</td><td>{{ o.order_date.strftime('%-d %b %Y') if o.order_date.strftime is defined else o.order_date }}</td><td class="r">{{ o.units }}</td><td class="r">{{ o.order_total|inr }}</td><td>{{ o.payment_method }}</td><td>{{ badge(o.order_status) }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endblock %}

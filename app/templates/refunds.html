@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge %}
+{% block title %}Refunds{% endblock %}
+{% block heading %}Refund processing{% endblock %}
+{% block content %}
+<section class="card"><div class="scroll"><table class="tbl">
+<thead><tr><th>#</th><th>Order</th><th>Product</th><th class="r">Refund</th><th class="r">Returned value</th><th class="r">Order paid</th><th>Method</th><th>Initiated</th><th>Processed</th><th>Status</th><th></th></tr></thead><tbody>
+{% for f in rows %}<tr><td>{{ f.refund_id }}</td><td><a href="{{ url_for('order_detail', oid=f.order_id) }}">{{ f.order_number }}</a></td><td>{{ f.product_name }}</td>
+  <td class="r">{{ f.refund_amount|inr }}</td><td class="r">{{ f.return_value|inr }}</td><td class="r">{{ f.order_paid|inr }}</td><td>{{ f.refund_method }}<br><small class="muted">paid by {{ f.payment_method }}</small></td>
+  <td>{{ f.initiated_at.date() if f.initiated_at else '-' }}</td><td>{{ f.processed_at.date() if f.processed_at else '-' }}</td><td>{{ badge(f.refund_status) }}</td>
+  <td>{% if f.refund_status == 'Initiated' %}<form class="inline" method="post" action="{{ url_for('refund_process', fid=f.refund_id) }}"><button class="btn sm">Mark processed</button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="11" class="empty">No refunds yet. Start one from an approved return.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

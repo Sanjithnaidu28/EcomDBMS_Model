@@ -1,0 +1,37 @@
+{% from "macros.html" import icon %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ShopDesk{% endblock %} – ShopDesk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="{{ url_for('dashboard') }}"><span class="logo">₹</span><span>ShopDesk<small>Marketplace back office</small></span></a>
+    {% set nav = [('dashboard','Dashboard'),('products','Catalogue'),('customers','Customers'),('cart','Cart & checkout'),('orders','Orders'),('shipments','Shipments'),('returns','Returns'),('refunds','Refunds'),('reports','Reports')] %}
+    <nav>
+      {% for ep, label in nav %}
+        {% set active = request.endpoint and (request.endpoint == ep or request.endpoint.startswith(ep.rstrip('s')) or (ep == 'cart' and request.endpoint == 'checkout')) %}
+        <a href="{{ url_for(ep) }}" class="{{ 'active' if active }}" {{ 'aria-current=page' if active }}>{{ icon(ep) }}<span>{{ label }}</span></a>
+      {% endfor %}
+    </nav>
+    <div class="side-foot"><strong>ecommerce_dbms</strong><span>Sanjith Naidu, 25WU0101001T</span></div>
+  </aside>
+  <main class="main">
+    <header class="page-head">
+      <div><h1>{% block heading %}{% endblock %}</h1>{% block sub %}{% endblock %}</div>
+      <div class="head-actions">{% block actions %}{% endblock %}</div>
+    </header>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}<div class="flash {{ cat }}" role="alert">{{ msg }}</div>{% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+</body>
+</html>

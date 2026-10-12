@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge %}
+{% block title %}Shipments{% endblock %}
+{% block heading %}Shipment tracking{% endblock %}
+{% block content %}
+<nav class="tabs">{% for k, l in [('open','In progress'),('Delivered','Delivered'),('all','All')] %}<a href="{{ url_for('shipments', status=k) }}" class="{{ 'active' if status == k }}">{{ l }}</a>{% endfor %}</nav>
+<section class="card"><div class="scroll"><table class="tbl">
+<thead><tr><th>Order</th><th>Customer</th><th>City</th><th>Courier</th><th>Tracking</th><th>Shipped</th><th>Expected</th><th>Status</th><th>Update</th></tr></thead><tbody>
+{% for s in rows %}<tr><td><a href="{{ url_for('order_detail', oid=s.order_id) }}">{{ s.order_number }}</a></td><td>{{ s.customer_name }}</td><td>{{ s.city }}</td><td>{{ s.courier_name }}</td><td class="code">{{ s.tracking_number }}</td>
+  <td>{{ s.shipped_date or '-' }}</td><td>{{ s.expected_delivery or '-' }}{% if s.shipment_status != 'Delivered' and s.expected_delivery and s.expected_delivery < today %} {{ badge('Late') }}{% endif %}</td>
+  <td>{{ badge(s.shipment_status) }}{% if s.delivered_date %}<br><small class="muted">{{ s.delivered_date }}</small>{% endif %}</td>
+  <td>{% if s.shipment_status != 'Delivered' %}<form class="inline" method="post" action="{{ url_for('shipment_update', sid=s.shipment_id) }}">
+      <select id="st-{{ s.shipment_id }}" name="shipment_status" aria-label="New status">{% for f in flow %}{% if loop.index0 > (flow.index(s.shipment_status) if s.shipment_status in flow else -1) %}<option>{{ f }}</option>{% endif %}{% endfor %}</select>
+      <input class="w-date" id="dd-{{ s.shipment_id }}" name="delivered_date" type="date" value="{{ today }}" aria-label="Delivered on">
+      <button class="btn sm">Save</button></form>{% else %}<span class="muted">-</span>{% endif %}</td></tr>
+{% else %}<tr><td colspan="9" class="empty">No shipments here.</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="muted small">The delivery date is only used when the new status is Delivered. Marking a shipment Delivered also marks its order Delivered (trigger <code>trg_shipment_after_update</code>).</p></section>
+{% endblock %}

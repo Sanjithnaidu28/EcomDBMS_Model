@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge %}
+{% block title %}Reports{% endblock %}
+{% block heading %}Reports{% endblock %}
+{% block content %}
+<nav class="tabs">{% for k, v in reports.items() %}<a href="{{ url_for('reports', r=k) }}" class="{{ 'active' if k == key }}">{{ v[0] }}</a>{% endfor %}</nav>
+<section class="card">
+  <h2>{{ title }}</h2>
+  <div class="scroll"><table class="tbl">
+  <thead><tr>{% for c in columns %}<th>{{ c.replace('_', ' ') }}</th>{% endfor %}</tr></thead><tbody>
+  {% for row in rows %}<tr>{% for c in columns %}{% set v = row[c] %}
+    <td class="{{ 'r' if v is number }}">{% if v is none %}<span class="muted">-</span>{% elif c.endswith('status') %}{{ badge(v) }}{% elif v is number and (c.endswith('sales') or c.endswith('revenue') or c.endswith('value') or c.endswith('amount') or c in ('refunds', 'order_paid')) %}{{ v|inr }}{% else %}{{ v }}{% endif %}</td>
+  {% endfor %}</tr>{% else %}<tr><td class="empty">No data.</td></tr>{% endfor %}
+  </tbody></table></div>
+  <p class="muted small">Source: view <code>v_{{ {'orders':'order_status_report','sellers':'seller_performance','stock':'stock_status','returns':'return_report','refunds':'refund_report','ratings':'product_ratings','revenue':'monthly_revenue'}[key] }}</code></p>
+</section>
+{% endblock %}

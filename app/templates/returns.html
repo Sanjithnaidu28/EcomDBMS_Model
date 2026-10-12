@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge %}
+{% block title %}Returns{% endblock %}
+{% block heading %}Return approval{% endblock %}
+{% block content %}
+<nav class="tabs"><a href="{{ url_for('returns') }}" class="{{ 'active' if not status }}">All</a>{% for s in statuses %}<a href="{{ url_for('returns', status=s) }}" class="{{ 'active' if s == status }}">{{ s }}</a>{% endfor %}</nav>
+<section class="card"><div class="scroll"><table class="tbl">
+<thead><tr><th>#</th><th>Order</th><th>Customer</th><th>Product</th><th class="r">Qty</th><th>Reason</th><th>Requested</th><th class="r">Value</th><th>Status</th><th>Action</th></tr></thead><tbody>
+{% for r in rows %}<tr><td>{{ r.return_id }}</td><td><a href="{{ url_for('order_detail', oid=r.order_id) }}">{{ r.order_number }}</a></td><td>{{ r.customer_name }}</td><td class="wrap">{{ r.product_name }}</td><td class="r">{{ r.quantity }}</td><td class="wrap">{{ r.reason }}</td><td>{{ r.request_date }}</td><td class="r">{{ r.return_value|inr }}</td>
+  <td>{{ badge(r.return_status) }}{% if r.refund_id %}<br><small class="muted">refund {{ r.refund_status|lower }}</small>{% endif %}</td>
+  <td class="nowrap">
+    {% if r.return_status == 'Requested' %}
+      <form class="inline" method="post" action="{{ url_for('return_decide', rid=r.return_id) }}"><input type="hidden" name="action" value="approve"><button class="btn sm">Approve</button></form>
+      <form class="inline" method="post" action="{{ url_for('return_decide', rid=r.return_id) }}"><input type="hidden" name="action" value="reject"><button class="btn sm danger">Reject</button></form>
+    {% elif r.return_status == 'Approved' %}
+      <form class="inline" method="post" action="{{ url_for('return_decide', rid=r.return_id) }}"><input type="hidden" name="action" value="receive"><button class="btn sm ghost">Mark received</button></form>
+    {% endif %}
+    {% if r.return_status in ('Approved', 'Received') and not r.refund_id %}
+      <form class="inline" method="post" action="{{ url_for('refund_new') }}"><input type="hidden" name="return_id" value="{{ r.return_id }}">
+        <input class="w-sm" id="ra-{{ r.return_id }}" name="refund_amount" type="number" step="0.01" min="0.01" value="{{ r.return_value }}" aria-label="Refund amount">
+        <button class="btn sm primary">Refund</button></form>
+    {% endif %}
+  </td></tr>
+{% else %}<tr><td colspan="10" class="empty">No returns here.</td></tr>{% endfor %}
+</tbody></table></div>
+<p class="muted small">Customers request returns from the order page. The database accepts a return only after delivery and inside the product's return window, and a refund only up to the value returned and the amount paid.</p></section>
+{% endblock %}

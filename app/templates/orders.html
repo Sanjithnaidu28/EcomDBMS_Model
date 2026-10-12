@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge %}
+{% block title %}Orders{% endblock %}
+{% block heading %}Orders{% endblock %}
+{% block content %}
+<form class="filters" method="get">
+  <input id="oq" name="q" value="{{ q }}" placeholder="Order number or customer" aria-label="Search orders">
+  <select id="ostatus" name="status" aria-label="Status"><option value="">All statuses</option>{% for s in statuses %}<option {{ 'selected' if s == status }}>{{ s }}</option>{% endfor %}</select>
+  <button class="btn">Filter</button>
+</form>
+<section class="card">
+  <p class="count">{{ rows|length }} order{{ '' if rows|length == 1 else 's' }}</p>
+  <div class="scroll"><table class="tbl">
+  <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th class="r">Items</th><th class="r">Total</th><th>Payment</th><th>Shipment</th><th>Status</th></tr></thead><tbody>
+  {% for o in rows %}<tr><td><a href="{{ url_for('order_detail', oid=o.order_id) }}">{{ o.order_number }}</a></td><td>{{ o.customer_name }}</td><td>{{ o.order_date }}</td>
+    <td class="r">{{ o.units }}</td><td class="r">{{ o.order_total|inr }}</td><td>{{ o.payment_method }} {{ badge(o.payment_status) }}</td><td>{{ badge(o.shipment_status) }}</td><td>{{ badge(o.order_status) }}</td></tr>
+  {% else %}<tr><td colspan="8" class="empty">No orders match.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

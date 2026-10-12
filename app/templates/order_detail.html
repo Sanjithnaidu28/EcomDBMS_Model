@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "macros.html" import badge %}
+{% block title %}{{ order.order_number }}{% endblock %}
+{% block heading %}{{ order.order_number }} {{ badge(order.order_status) }}{% endblock %}
+{% block actions %}
+  {% if order.order_status in ('Placed', 'Confirmed') %}
+    {% if order.order_status == 'Placed' %}<form class="inline" method="post" action="{{ url_for('order_status', oid=order.order_id) }}"><input type="hidden" name="status" value="Confirmed"><button class="btn">Confirm</button></form>{% endif %}
+    <form class="inline" method="post" action="{{ url_for('order_status', oid=order.order_id) }}"><input type="hidden" name="status" value="Cancelled"><button class="btn danger">Cancel order</button></form>
+  {% endif %}
+{% endblock %}
+{% block content %}
+<div class="facts">
+  <div><span class="fl">Customer</span>{{ order.customer_name }}<br><small>{{ order.email }} · {{ order.phone }}</small></div>
+  <div><span class="fl">Deliver to</span>{{ order.address_line }}<br><small>{{ order.city }}, {{ order.state }} {{ order.pincode }}</small></div>
+  <div><span class="fl">Ordered</span>{{ order.order_date }}</div>
+  <div><span class="fl">Payment</span>{% if payment %}{{ payment.amount|inr }} · {{ payment.payment_method }} {{ badge(payment.payment_status) }}<br><small>{{ payment.transaction_ref }}</small>{% else %}-{% endif %}</div>
+</div>
+
+<section class="card">
+  <h2>Items</h2>
+  <div class="scroll"><table class="tbl"><thead><tr><th>Product</th><th class="r">Qty</th><th class="r">Unit price</th><th class="r">Line total</th><th class="r">Returned</th><th>Return until</th><th>Request return</th></tr></thead><tbody>
+  {% for i in items %}<tr><td class="wrap">{{ i.product_name }} <span class="code">{{ i.product_code }}</span></td><td class="r">{{ i.quantity }}</td><td class="r">{{ i.unit_price|inr }}</td><td class="r">{{ i.line_total|inr }}</td><td class="r">{{ i.returned }}</td>
+    <td>{% if i.return_until %}{{ i.return_until }}{% if i.return_until < today %} <span class="muted">(ended)</span>{% endif %}{% else %}<span class="muted">after delivery</span>{% endif %}</td>
+    <td>{% if i.can_return %}<form class="inline" method="post" action="{{ url_for('return_new') }}">
+        <input type="hidden" name="order_id" value="{{ order.order_id }}"><input type="hidden" name="order_item_id" value="{{ i.order_item_id }}">
+        <input class="w-xs" id="rq-{{ i.order_item_id }}" name="quantity" type="number" min="1" max="{{ i.quantity - i.returned }}" value="1" aria-label="Quantity">
+        <input class="w-md" id="rr-{{ i.order_item_id }}" name="reason" placeholder="Reason" required aria-label="Reason">
+        <input class="w-date" id="rd-{{ i.order_item_id }}" name="request_date" type="date" value="{{ today }}" aria-label="Request date">
+        <button class="btn sm">Request</button></form>{% else %}<span class="muted">-</span>{% endif %}</td></tr>{% endfor %}
+  </tbody><tfoot><tr><td colspan="3" class="r"><strong>Order total</strong></td><td class="r"><strong>{{ total|inr }}</strong></td><td colspan="3"></td></tr></tfoot></table></div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Shipment</h2>
+    {% if shipment %}
+      <dl class="kv"><dt>Courier</dt><dd>{{ shipment.courier_name }} · <span class="code">{{ shipment.tracking_number }}</span></dd>
+        <dt>Status</dt><dd>{{ badge(shipment.shipment_status) }}</dd><dt>Shipped</dt><dd>{{ shipment.shipped_date or '-' }}</dd>
+        <dt>Expected</dt><dd>{{ shipment.expected_delivery or '-' }}</dd><dt>Delivered</dt><dd>{{ shipment.delivered_date or '-' }}</dd></dl>
+      {% if shipment.shipment_status != 'Delivered' %}<p><a href="{{ url_for('shipments') }}">Update tracking</a></p>{% endif %}
+    {% elif order.order_status in ('Placed', 'Confirmed') %}
+      <form class="form" method="post" action="{{ url_for('order_ship', oid=order.order_id) }}"><div class="fields">
+        <label>Courier<select id="courier_name" name="courier_name">{% for c in couriers %}<option>{{ c }}</option>{% endfor %}</select></label>
+        <label>Tracking number<input id="tracking_number" name="tracking_number" required pattern="[A-Za-z0-9]{6,30}"></label>
+        <label>Shipped on<input id="shipped_date" name="shipped_date" type="date" value="{{ today }}" required></label>
+        <label>Expected delivery<input id="expected_delivery" name="expected_delivery" type="date" required></label></div>
+        <div class="form-actions"><button class="btn primary">Create shipment</button></div></form>
+    {% else %}<p class="empty">No shipment for a {{ order.order_status|lower }} order.</p>{% endif %}
+  </section>
+  <section class="card">
+    <h2>Returns and refunds</h2>
+    {% if returns %}<div class="scroll"><table class="tbl"><thead><tr><th>#</th><th>Product</th><th class="r">Qty</th><th>Status</th><th>Refund</th></tr></thead><tbody>
+    {% for r in returns %}<tr><td>{{ r.return_id }}</td><td class="wrap">{{ r.product_name }}<br><small class="muted">{{ r.reason }} · {{ r.request_date }}</small></td><td class="r">{{ r.quantity }}</td><td>{{ badge(r.return_status) }}</td>
+      <td>{% if r.refund_id %}{{ r.refund_amount|inr }} {{ badge(r.refund_status) }}{% else %}-{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div><p><a href="{{ url_for('returns') }}">Manage returns</a></p>{% else %}<p class="empty">No returns for this order.</p>{% endif %}
+  </section>
+</div>
+{% endblock %}

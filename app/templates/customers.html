@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Customers{% endblock %}
+{% block heading %}Customers{% endblock %}
+{% block content %}
+<div class="grid-2 wide-left">
+  <section class="card">
+    <form class="filters" method="get"><input id="cq" name="q" value="{{ q }}" placeholder="Search name, email or phone" aria-label="Search customers"><button class="btn">Search</button></form>
+    <table class="tbl"><thead><tr><th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>City</th><th class="r">Orders</th><th></th></tr></thead><tbody>
+    {% for c in rows %}<tr><td>{{ c.customer_id }}</td><td>{{ c.name }}</td><td>{{ c.email }}</td><td>{{ c.phone }}</td><td>{{ c.city or '-' }}</td><td class="r">{{ c.orders }}</td><td><a class="btn sm ghost" href="{{ url_for('cart', customer_id=c.customer_id) }}">Cart</a></td></tr>
+    {% else %}<tr><td colspan="7" class="empty">No customers found.</td></tr>{% endfor %}
+    </tbody></table>
+  </section>
+  <form class="card form" method="post">
+    <h2>Register a customer</h2>
+    <div class="fields one">
+      <label>First name<input id="first_name" name="first_name" required maxlength="50"></label>
+      <label>Last name<input id="last_name" name="last_name" required maxlength="50"></label>
+      <label>Email<input id="email" name="email" type="email" required></label>
+      <label>Mobile<input id="phone" name="phone" required pattern="[6-9][0-9]{9}" placeholder="98xxxxxxxx"></label>
+      <label>Address<input id="address_line" name="address_line" required maxlength="150"></label>
+      <label>City<input id="city" name="city" required></label>
+      <label>State<input id="state" name="state" required></label>
+      <label>Pincode<input id="pincode" name="pincode" required pattern="[1-9][0-9]{5}"></label>
+    </div>
+    <div class="form-actions"><button class="btn primary">Register</button></div>
+  </form>
+</div>
+{% endblock %}
