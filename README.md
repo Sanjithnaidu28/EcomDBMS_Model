@@ -54,6 +54,30 @@ python3 app.py
 
 Then open **http://127.0.0.1:5000**
 
+## Deploying a live demo (Render + Clever Cloud)
+
+The app reads all database settings from environment variables (`config.py`), so it runs unchanged against any MySQL-compatible host — you're not limited to local XAMPP.
+
+### 1. Create a free cloud database (Clever Cloud)
+
+1. Sign up at [clever-cloud.com](https://www.clever-cloud.com/) (free, no card required).
+2. Create a new application → **Add-on** → **MySQL** → pick the free **DEV** plan.
+3. Open the add-on's **Information** tab and note the host, port, database name, user and password.
+4. Load the schema into it from your machine:
+   ```bash
+   mysql -h <host> -P <port> -u <user> -p <database> < database/00_cloud_setup.sql
+   ```
+   This is `01_schema.sql` + `02_triggers_procedures.sql` + `03_sample_data.sql` + `04_views.sql` combined into one file, with the `CREATE/DROP DATABASE` and `USE` statements stripped out (a managed add-on already gives you one fixed database and no privilege to create another).
+
+### 2. Deploy the app (Render)
+
+1. Sign up at [render.com](https://render.com/) and connect your GitHub account.
+2. **New** → **Web Service** → pick this repository. Render will detect `render.yaml` and pre-fill the build/start commands (`pip install -r requirements.txt` / `gunicorn app:app`).
+3. In the service's **Environment** tab, add the values from `.env.example`, filled in with your Clever Cloud credentials: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`. Leave `SECRET_KEY` and `FLASK_DEBUG` as Render generates/sets them.
+4. Deploy. Render gives you a public `https://<your-service>.onrender.com` URL.
+
+(Free-tier Render services spin down after 15 minutes of inactivity and take ~30–60 seconds to wake back up on the next visit — normal for a demo link, not a bug.)
+
 ## Business rules enforced by the database
 
 | Rule | Enforced by |

@@ -605,4 +605,5 @@ def reports():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    import os
+    app.run(debug=os.getenv("FLASK_DEBUG", "1") == "1", host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
