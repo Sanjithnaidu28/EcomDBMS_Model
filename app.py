@@ -12,12 +12,17 @@ from decimal import Decimal, InvalidOperation
 import mysql.connector
 from flask import Flask, render_template, request, redirect, url_for, flash
 
-from config import SECRET_KEY
+from config import SECRET_KEY, DEMO_MODE
 from db import query, scalar, execute, run_transaction, call_procedure, close_db, friendly_error
 
 app = Flask(__name__, template_folder="app/templates", static_folder="app/static")
 app.secret_key = SECRET_KEY
 app.teardown_appcontext(close_db)
+
+
+@app.context_processor
+def inject_demo_mode():
+    return {"demo_mode": DEMO_MODE}
 
 ORDER_STATUSES = ["Placed", "Confirmed", "Shipped", "Delivered", "Cancelled"]
 SHIPMENT_FLOW = ["Shipped", "In Transit", "Out for Delivery", "Delivered"]

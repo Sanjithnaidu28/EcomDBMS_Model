@@ -1,22 +1,17 @@
 services:
   - type: web
     name: shopdesk
-    env: python
+    runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
+      # Live demo runs on the bundled SQLite copy of the database (demo/shopdesk_demo.db),
+      # so no MySQL server is needed. Set DEMO_MODE to 0 and add DB_HOST, DB_PORT,
+      # DB_USER, DB_PASSWORD and DB_NAME to use a real MySQL database instead.
+      - key: DEMO_MODE
+        value: "1"
       - key: FLASK_DEBUG
         value: "0"
-      - key: DB_HOST
-        sync: false
-      - key: DB_PORT
-        sync: false
-      - key: DB_USER
-        sync: false
-      - key: DB_PASSWORD
-        sync: false
-      - key: DB_NAME
-        sync: false
       - key: SECRET_KEY
         generateValue: true

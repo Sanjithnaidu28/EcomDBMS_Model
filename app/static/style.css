@@ -206,3 +206,5 @@ input:hover, select:hover, textarea:hover { border-color: #BBAED0; }
   .form .fields { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+.side-foot .demo-note { display: block; margin-top: 6px; font-size: 11px; opacity: .75; }

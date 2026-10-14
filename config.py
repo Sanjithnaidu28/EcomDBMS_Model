@@ -17,3 +17,7 @@ DB_CONFIG = {
 }
 
 SECRET_KEY = os.getenv("SECRET_KEY", "ecommerce-dbms-pbl-demo")
+
+# DEMO_MODE=1 runs the app on the bundled SQLite copy of the database (demo/shopdesk_demo.db)
+# instead of MySQL. Used for the hosted live demo, where there is no MySQL server.
+DEMO_MODE = os.getenv("DEMO_MODE", "0") == "1"

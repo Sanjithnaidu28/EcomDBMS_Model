@@ -3,7 +3,10 @@ and translation of MySQL errors (including trigger SIGNALs) into plain messages.
 import re
 import mysql.connector
 from flask import g
-from config import DB_CONFIG
+from config import DB_CONFIG, DEMO_MODE
+
+if DEMO_MODE:
+    import demo_db  # noqa: F401  (replaces mysql.connector.connect with the SQLite demo database)
 
 
 def get_db():

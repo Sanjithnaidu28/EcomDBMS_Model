@@ -20,6 +20,9 @@ Built as a DBMS Project-Based Learning project by **Sanjith Naidu (25WU0101001T)
 ├── app.py              Flask routes and input validation (24 routes)
 ├── db.py               database connection, transactions, error translation
 ├── config.py           connection settings (host, user, password, database)
+├── demo_db.py          demo mode: SQLite adapter used by the hosted live demo
+├── demo/               shopdesk_demo.db, the bundled SQLite copy of the database
+├── render.yaml         Render deployment settings
 ├── requirements.txt
 ├── app/templates/       page templates (Jinja2)
 ├── app/static/          style.css
@@ -54,29 +57,22 @@ python3 app.py
 
 Then open **http://127.0.0.1:5000**
 
-## Deploying a live demo (Render + Clever Cloud)
+## Live demo (Render)
 
-The app reads all database settings from environment variables (`config.py`), so it runs unchanged against any MySQL-compatible host — you're not limited to local XAMPP.
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Sanjithnaidu28/EcomDBMS_Model)
 
-### 1. Create a free cloud database (Clever Cloud)
+The hosted demo runs in **demo mode** (`DEMO_MODE=1`, set in `render.yaml`), so it needs no database server. Instead of MySQL it uses `demo/shopdesk_demo.db`, a SQLite copy of the database bundled with the app:
 
-1. Sign up at [clever-cloud.com](https://www.clever-cloud.com/) (free, no card required).
-2. Create a new application → **Add-on** → **MySQL** → pick the free **DEV** plan.
-3. Open the add-on's **Information** tab and note the host, port, database name, user and password.
-4. Load the schema into it from your machine:
-   ```bash
-   mysql -h <host> -P <port> -u <user> -p <database> < database/00_cloud_setup.sql
-   ```
-   This is `01_schema.sql` + `02_triggers_procedures.sql` + `03_sample_data.sql` + `04_views.sql` combined into one file, with the `CREATE/DROP DATABASE` and `USE` statements stripped out (a managed add-on already gives you one fixed database and no privilege to create another).
+- the same 15 tables, UNIQUE / CHECK / foreign-key constraints and sample data as the MySQL scripts
+- the 8 report views
+- the business-rule triggers ported to SQLite, with the same error messages
+- the checkout procedure `sp_place_order`, reimplemented as one SQLite transaction in `demo_db.py` (SQLite has no stored procedures)
 
-### 2. Deploy the app (Render)
+`demo_db.py` swaps `mysql.connector.connect` for a small SQLite adapter, so `app.py` and `db.py` run unchanged. The demo starts from the original sample data every time the server restarts. Locally, without `DEMO_MODE`, the app connects to MySQL exactly as described above.
 
-1. Sign up at [render.com](https://render.com/) and connect your GitHub account.
-2. **New** → **Web Service** → pick this repository. Render will detect `render.yaml` and pre-fill the build/start commands (`pip install -r requirements.txt` / `gunicorn app:app`).
-3. In the service's **Environment** tab, add the values from `.env.example`, filled in with your Clever Cloud credentials: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`. Leave `SECRET_KEY` and `FLASK_DEBUG` as Render generates/sets them.
-4. Deploy. Render gives you a public `https://<your-service>.onrender.com` URL.
+**To deploy:** click the button above, sign in to Render with GitHub, and click **Apply**. Render builds the app (`pip install -r requirements.txt`, then `gunicorn app:app`) and gives you a public `https://<name>.onrender.com` URL. Free Render services sleep after 15 minutes without visitors and take about a minute to wake on the next visit.
 
-(Free-tier Render services spin down after 15 minutes of inactivity and take ~30–60 seconds to wake back up on the next visit — normal for a demo link, not a bug.)
+**Using a real MySQL database instead:** set `DEMO_MODE=0` and add `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` and `DB_NAME` (see `.env.example`). For a managed MySQL host that gives you one fixed database, load `database/00_cloud_setup.sql`. It combines files 01–04 without the `CREATE/DROP DATABASE` and `USE` statements.
 
 ## Business rules enforced by the database
 

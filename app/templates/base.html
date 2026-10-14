@@ -20,7 +20,7 @@
         <a href="{{ url_for(ep) }}" class="{{ 'active' if active }}" {{ 'aria-current=page' if active }}>{{ icon(ep) }}<span>{{ label }}</span></a>
       {% endfor %}
     </nav>
-    <div class="side-foot"><strong>ecommerce_dbms</strong><span>Sanjith Naidu, 25WU0101001T</span></div>
+    <div class="side-foot"><strong>ecommerce_dbms</strong><span>Sanjith Naidu, 25WU0101001T</span>{% if demo_mode %}<span class="demo-note">Live demo · sample data resets on restart</span>{% endif %}</div>
   </aside>
   <main class="main">
     <header class="page-head">
